@@ -17,6 +17,7 @@ data TEAM12 where
   Lambda :: String -> TTEAM12 -> TEAM12 -> TEAM12 
   Bind :: String -> TEAM12 -> TEAM12 -> TEAM12
   App :: TEAM12 -> TEAM12 -> TEAM12
+  Fix :: TEAM12 -> TEAM12
   And :: TEAM12 -> TEAM12 -> TEAM12
   Or :: TEAM12 -> TEAM12 -> TEAM12
   Leq :: TEAM12 -> TEAM12 -> TEAM12
@@ -28,6 +29,7 @@ data TTEAM12 where
     TNum :: TTEAM12
     TBool :: TTEAM12
     (:->:) :: TTEAM12 -> TTEAM12 -> TTEAM12
+    TUnit :: TTEAM12
     deriving (Show,Eq)
 
 data VALUELANG where
@@ -45,6 +47,7 @@ data EXTLANG where
   If0X :: EXTLANG -> EXTLANG -> EXTLANG -> EXTLANG
   LambdaX :: String -> EXTLANG -> EXTLANG
   AppX :: EXTLANG -> EXTLANG -> EXTLANG
+  FixX :: EXTLANG -> EXTLANG
   BindX :: String -> EXTLANG -> EXTLANG -> EXTLANG
   IdX :: String -> EXTLANG
   deriving (Show,Eq)
@@ -52,6 +55,27 @@ data EXTLANG where
 type Cont = [(String,TTEAM12)]
 type TermEnv = [(String,TEAM12)]
 type ValueEnv = [(String,VALUELANG)]
+
+-- need subst to add fix
+
+subst :: String -> TEAM12 -> TEAM12 -> TEAM12
+subst i v (Num x) = (Num x)
+subst i v (Plus l r) = (Plus (subst i v l) (subst i v r))
+subst i v (Minus l r) = (Minus (subst i v l) (subst i v r))
+subst i v (Mult l r) = (Mult (subst i v l) (subst i v r))
+subst i v (Div l r) = (Div (subst i v l) (subst i v r))
+subst i v (Boolean b) = (Boolean b)
+subst i v (And l r) = (And (subst i v l) (subst i v r))
+subst i v (Or l r) = (Or (subst i v l) (subst i v r))
+subst i v (Leq l r) = (Leq (subst i v l) (subst i v r))
+subst i v (IsZero l) = (IsZero (subst i v l))
+subst i v (If p t e) = (If (subst i v p) (subst i v t) (subst i v e))
+subst i v (Id i') = if i==i' then v else (Id i')
+subst i v (Bind i' v' b') = if i==i' then (Bind i' (subst i v v') b') else (Bind i' (subst i v v') (subst i v b'))
+subst i v (Lambda i' t b) = if i==i' then (Lambda i' t b) 
+                                   else (Lambda i' t (subst i v b))
+subst i v (App f a) = (App (subst i v f) (subst i v a))
+subst i v (Fix f) = (Fix (subst i v f))
 
 -- Part 1: Type Inference
 
@@ -99,6 +123,8 @@ typeofM cont (App x y) = do { tyXd :->: tyXr <- typeofM cont x ;
                              if tyXd==tyY
                              then return tyXr
                              else Nothing }
+typeofM c (Fix t) = do { (d :->: r) <- typeofM c t;
+                         return r }
 
 -- Part 2: Evaluation
 evalM :: ValueEnv -> TEAM12 -> (Maybe VALUELANG)
@@ -134,6 +160,8 @@ evalM env (Lambda x i b) = return (ClosureV x b env)
 evalM env (App f a) = do { (ClosureV i b j) <- evalM env f;
                          v <- evalM env a;
                          evalM ((i,v):j) b}
+evalM env (Fix f) = do { (ClosureV i b env') <- evalM env f;
+                         evalM env' (subst i (Fix (Lambda i TUnit b)) b) }
 evalM env (Bind i v b) = do { v' <- (evalM env v) ;
                              evalM ((i,v'):env) b }
 evalM env (And l r) = do{(BoolV l') <- evalM env l;
