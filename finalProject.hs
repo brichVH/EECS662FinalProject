@@ -50,6 +50,7 @@ data EXTLANG where
   FixX :: EXTLANG -> EXTLANG
   BindX :: String -> EXTLANG -> EXTLANG -> EXTLANG
   IdX :: String -> EXTLANG
+  Composite :: EXTLANG -> EXTLANG -> EXTLANG -> EXTLANG
   deriving (Show,Eq)
 
 type Cont = [(String,TTEAM12)]
@@ -175,6 +176,20 @@ evalM env (Leq l r) = do{(NumV l') <- evalM env l;
                      return (BoolV(l' <= r')) }
 evalM env (IsZero l) = do{(NumV l') <- evalM env l;
                      return (BoolV(l' == 0)) }
+                     
+-- Part 4: Extra lang feature
+elabTerm :: EXTLANG -> TEAM12
+elabTerm (NumX x) = Num x
+elabTerm (PlusX l r) = Plus (elabTerm l)(elabTerm r)
+elabTerm (MinusX l r) = Minus (elabTerm l)(elabTerm r)
+elabTerm (MultX l r) = Mult (elabTerm l)(elabTerm r)
+elabTerm (DivX l r) = Div (elabTerm l)(elabTerm r)
+elabTerm (If0X a b c) =If0 (elabTerm a)(elabTerm b)(elabTerm c)
+elabTerm (LambdaX i b) = Lambda i (elabTerm b)
+elabTerm (AppX f a) = App (elabTerm f)(elabTerm a)
+elabTerm (IdX i) = Id i
+elabTerm (BindX i v b) = App(Lambda i (elabTerm b))(elabTerm v)
+elabTerm (Composite f g a) = App (elabTerm f) (App (elabTerm g) (elabTerm a))
 
 main = do
     print "--------------------*  typeofM *--------------------"
