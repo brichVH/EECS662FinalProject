@@ -45,7 +45,7 @@ data EXTLANG where
   MultX :: EXTLANG -> EXTLANG -> EXTLANG
   DivX :: EXTLANG -> EXTLANG -> EXTLANG
   If0X :: EXTLANG -> EXTLANG -> EXTLANG -> EXTLANG
-  LambdaX :: String -> EXTLANG -> EXTLANG
+  LambdaX :: String -> TTEAM12 -> EXTLANG -> EXTLANG
   AppX :: EXTLANG -> EXTLANG -> EXTLANG
   FixX :: EXTLANG -> EXTLANG
   BindX :: String -> EXTLANG -> EXTLANG -> EXTLANG
@@ -189,8 +189,8 @@ elabTerm (PlusX l r) = Plus (elabTerm l)(elabTerm r)
 elabTerm (MinusX l r) = Minus (elabTerm l)(elabTerm r)
 elabTerm (MultX l r) = Mult (elabTerm l)(elabTerm r)
 elabTerm (DivX l r) = Div (elabTerm l)(elabTerm r)
-elabTerm (If0X a b c) =If0 (elabTerm a)(elabTerm b)(elabTerm c)
-elabTerm (LambdaX i b) = Lambda i (elabTerm b)
+elabTerm (If0X a b c) =If (elabTerm a)(elabTerm b)(elabTerm c)
+elabTerm (LambdaX x i b) = (Lambda x i (elabTerm b))
 elabTerm (AppX f a) = App (elabTerm f)(elabTerm a)
 elabTerm (IdX i) = Id i
 elabTerm (BindX i v b) = App(Lambda i (elabTerm b))(elabTerm v)
@@ -205,8 +205,8 @@ main = do
     print $ typeofM [] (App (Lambda "x" TNum (Plus (Id "x") (Num 5))) (Num 5))
     print $ typeofM [] (App (Lambda "x" TBool (If (Id "x") (Num 5) (Num 10))) (Boolean True))
     print("eval (lambda x in x+1)(lambda x in x+2)(3) = " ++ show (evalTerm [] (Composite 
-                                                              (LambdaX "x" (MultX (IdX "x")(NumX 5)))
-                                                              (LambdaX "x" (PlusX (IdX "x")(NumX 2)))
+                                                              (LambdaX "x" TNum (MultX (IdX "x")(NumX 5)))
+                                                              (LambdaX "x" TNum (PlusX (IdX "x")(NumX 2)))
                                                               (NumX 3)
                                                             )
                                                 ));
