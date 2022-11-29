@@ -178,6 +178,11 @@ evalM env (IsZero l) = do{(NumV l') <- evalM env l;
                      return (BoolV(l' == 0)) }
                      
 -- Part 4: Extra lang feature
+evalTerm :: ValueEnv -> EXTLANG -> (Maybe VALUELANG)
+evalTerm a b = do{
+evalM a (elabTerm b)
+}
+
 elabTerm :: EXTLANG -> TEAM12
 elabTerm (NumX x) = Num x
 elabTerm (PlusX l r) = Plus (elabTerm l)(elabTerm r)
@@ -199,6 +204,12 @@ main = do
     print $ typeofM [] (Lambda "x" TBool (If (Id "x") (Num 5) (Num 10)))
     print $ typeofM [] (App (Lambda "x" TNum (Plus (Id "x") (Num 5))) (Num 5))
     print $ typeofM [] (App (Lambda "x" TBool (If (Id "x") (Num 5) (Num 10))) (Boolean True))
+    print("eval (lambda x in x+1)(lambda x in x+2)(3) = " ++ show (evalTerm [] (Composite 
+                                                              (LambdaX "x" (MultX (IdX "x")(NumX 5)))
+                                                              (LambdaX "x" (PlusX (IdX "x")(NumX 2)))
+                                                              (NumX 3)
+                                                            )
+                                                ));
 
     print "--------------------*  evalM  *--------------------"
     -- print $ evalM [] (Plus (Num 5) (Num 10))
