@@ -193,7 +193,7 @@ elabTerm (If0X a b c) =If (elabTerm a)(elabTerm b)(elabTerm c)
 elabTerm (LambdaX x i b) = (Lambda x i (elabTerm b))
 elabTerm (AppX f a) = App (elabTerm f)(elabTerm a)
 elabTerm (IdX i) = Id i
-elabTerm (BindX i v b) = App(Lambda i (elabTerm b))(elabTerm v)
+elabTerm (BindX i v b) = (Bind i (elabTerm b) (elabTerm v))
 elabTerm (Composite f g a) = App (elabTerm f) (App (elabTerm g) (elabTerm a))
 
 main = do
