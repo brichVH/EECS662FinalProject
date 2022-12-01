@@ -193,6 +193,13 @@ elabTerm (IdX i) = Id i
 elabTerm (BindX i v b) = App(Lambda i TUnit (elabTerm b))(elabTerm v)
 elabTerm (Composite f g a) = App (elabTerm f) (App (elabTerm g) (elabTerm a))
 
+t = (Bind "f"
+        (Lambda "g" ((:->:) TNum TNum)
+        (Lambda "x" TNum
+        (If (IsZero (Id "x"))(Num 1)(Mult (Id "x")(App (Id "g")(Minus (Id "x")(Num 1)))))))
+        (App (Fix (Id "f")) (Num 3)))
+
+
 main = do
     print "--------------------*  typeofM *--------------------"
     print $ typeofM [] (Bind "blake" (Boolean True) (If (Id "blake") (Boolean True) (Boolean False)))
@@ -201,15 +208,19 @@ main = do
     print $ typeofM [] (Lambda "x" TBool (If (Id "x") (Num 5) (Num 10)))
     print $ typeofM [] (App (Lambda "x" TNum (Plus (Id "x") (Num 5))) (Num 5))
     print $ typeofM [] (App (Lambda "x" TBool (If (Id "x") (Num 5) (Num 10))) (Boolean True))
+    print $ typeofM [] t
+
+
+    print "--------------------*  evalM  *--------------------"
+    -- print $ evalM [] (Plus (Num 5) (Num 10))
+    print $ evalM [] (Lambda "x" TNum (Plus (Id "x") (Num 5)))
+    print $ evalM [] (App (Lambda "x" TNum (Plus (Id "x") (Num 5))) (Num 5))
+    print $ evalM [] (App (Lambda "x" TNum (Plus (Id "x") (Num 10))) (Num 5))
+    print $ evalM [] (Bind "blake" (Num 5) (Bind "Blake" (Num 7) (Plus (Id "blake") (Id "Blake"))))
     print ("eval ( x in x*5)(lambda x in x+2)(3) = " ++ show (evalTerm [] (Composite 
                                                               (LambdaX "x" TNum (MultX (IdX "x")(NumX 5)))
                                                               (LambdaX "x" TNum (PlusX (IdX "x")(NumX 2)))
                                                               (NumX 3)
                                                             )
                                                 ));
-
-t = (Bind "f"
-	(Lambda "g" ((:->:) TNum TNum)
-	(Lambda "x" TNum
-	(If (IsZero (Id "x"))(Num 1)(Mult (Id "x")(App (Id "g")(Minus (Id "x")(Num 1)))))))
-	(App (Fix (Id "f")) (Num 3)))
+    print $ evalM [] t
