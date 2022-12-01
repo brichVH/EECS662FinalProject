@@ -44,8 +44,8 @@ data EXTLANG where
   MinusX :: EXTLANG -> EXTLANG -> EXTLANG
   MultX :: EXTLANG -> EXTLANG -> EXTLANG
   DivX :: EXTLANG -> EXTLANG -> EXTLANG
-  If0X :: EXTLANG -> EXTLANG -> EXTLANG -> EXTLANG
-  LambdaX :: String -> TTEAM12 -> EXTLANG -> EXTLANG
+  IfX :: EXTLANG -> EXTLANG -> EXTLANG -> EXTLANG
+  LambdaX :: String -> TTEAM12 ->EXTLANG -> EXTLANG
   AppX :: EXTLANG -> EXTLANG -> EXTLANG
   FixX :: EXTLANG -> EXTLANG
   BindX :: String -> EXTLANG -> EXTLANG -> EXTLANG
@@ -149,13 +149,8 @@ evalM env (Div l r) = do {(NumV l') <- evalM env l;
                     return (NumV (l' `div` r')) 
                     else 
                         Nothing}
-evalM env (If c t l) = do {(NumV 0) <- evalM env c;
-                 (t') <- evalM env t;
-                 (l') <- evalM env l;
-                 if (False) then
-                     return t'
-                     else
-                         return l'}
+evalM env (If c t l) = do {(BoolV b) <- evalM env c;
+                           if b then evalM env t else evalM env l }
 evalM env (Id i) = (lookup i env)
 evalM env (Lambda x i b) = return (ClosureV x b env)
 evalM env (App f a) = do { (ClosureV i b j) <- evalM env f;
@@ -178,6 +173,7 @@ evalM env (IsZero l) = do{(NumV l') <- evalM env l;
                      return (BoolV(l' == 0)) }
                      
 -- Part 4: Extra lang feature
+
 evalTerm :: ValueEnv -> EXTLANG -> (Maybe VALUELANG)
 evalTerm a b = do{
 evalM a (elabTerm b)
@@ -189,11 +185,12 @@ elabTerm (PlusX l r) = Plus (elabTerm l)(elabTerm r)
 elabTerm (MinusX l r) = Minus (elabTerm l)(elabTerm r)
 elabTerm (MultX l r) = Mult (elabTerm l)(elabTerm r)
 elabTerm (DivX l r) = Div (elabTerm l)(elabTerm r)
-elabTerm (If0X a b c) =If (elabTerm a)(elabTerm b)(elabTerm c)
-elabTerm (LambdaX x i b) = (Lambda x i (elabTerm b))
+elabTerm (IfX a b c) = If (elabTerm a)(elabTerm b)(elabTerm c)
+elabTerm (LambdaX i t b) = Lambda i t (elabTerm b)
 elabTerm (AppX f a) = App (elabTerm f)(elabTerm a)
+elabTerm (FixX f) = Fix (elabTerm f)
 elabTerm (IdX i) = Id i
-elabTerm (BindX i v b) = (Bind i (elabTerm b) (elabTerm v))
+elabTerm (BindX i v b) = App(Lambda i TUnit (elabTerm b))(elabTerm v)
 elabTerm (Composite f g a) = App (elabTerm f) (App (elabTerm g) (elabTerm a))
 
 main = do
@@ -204,16 +201,15 @@ main = do
     print $ typeofM [] (Lambda "x" TBool (If (Id "x") (Num 5) (Num 10)))
     print $ typeofM [] (App (Lambda "x" TNum (Plus (Id "x") (Num 5))) (Num 5))
     print $ typeofM [] (App (Lambda "x" TBool (If (Id "x") (Num 5) (Num 10))) (Boolean True))
-    print("eval (lambda x in x*5)(lambda x in x+2)(3) = " ++ show (evalTerm [] (Composite 
+    print ("eval ( x in x*5)(lambda x in x+2)(3) = " ++ show (evalTerm [] (Composite 
                                                               (LambdaX "x" TNum (MultX (IdX "x")(NumX 5)))
                                                               (LambdaX "x" TNum (PlusX (IdX "x")(NumX 2)))
                                                               (NumX 3)
                                                             )
                                                 ));
 
-    print "--------------------*  evalM  *--------------------"
-    -- print $ evalM [] (Plus (Num 5) (Num 10))
-    print $ evalM [] (Lambda "x" TNum (Plus (Id "x") (Num 5)))
-    print $ evalM [] (App (Lambda "x" TNum (Plus (Id "x") (Num 5))) (Num 5))
-    print $ evalM [] (App (Lambda "x" TNum (Plus (Id "x") (Num 10))) (Num 5))
-    print $ evalM [] (Bind "blake" (Num 5) (Bind "Blake" (Num 7) (Plus (Id "blake") (Id "Blake"))))
+t = (Bind "f"
+	(Lambda "g" ((:->:) TNum TNum)
+	(Lambda "x" TNum
+	(If (IsZero (Id "x"))(Num 1)(Mult (Id "x")(App (Id "g")(Minus (Id "x")(Num 1)))))))
+	(App (Fix (Id "f")) (Num 3)))
