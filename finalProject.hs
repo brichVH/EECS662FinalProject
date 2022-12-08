@@ -171,7 +171,6 @@ evalM env (Leq l r) = do{(NumV l') <- evalM env l;
                      return (BoolV(l' <= r')) }
 evalM env (IsZero l) = do{(NumV l') <- evalM env l;
                      return (BoolV(l' == 0)) }
-evalM env (Composite f g a) = App (elabTerm f) (App (elabTerm g) (elabTerm a))
                      
 -- Part 4: Extra lang feature
 
