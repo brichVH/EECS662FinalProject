@@ -192,7 +192,6 @@ elabTerm (FixX f) = Fix (elabTerm f)
 elabTerm (IdX i) = Id i
 elabTerm (BindX i v b) = App(Lambda i TUnit (elabTerm b))(elabTerm v)
 elabTerm (Composite f g a) = App (elabTerm f) (App (elabTerm g) (elabTerm a))
-elabTerm (FixX f) =(Fix (elabTerm f))
 
 -- Part 5: interpreter
 evalT ::  TEAM12 -> (Maybe VALUELANG)
