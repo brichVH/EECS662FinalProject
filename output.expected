@@ -1,0 +1,15 @@
+"--------------------*  typeofM *--------------------"
+Just TBool
+Just TNum
+Just ((:->:) TNum TNum)
+Just ((:->:) TBool TNum)
+Just TNum
+Just TNum
+Just TNum
+"--------------------*  evalM  *--------------------"
+Just (ClosureV "x" (Plus (Id "x") (Num 5)) [])
+Just (NumV 10)
+Just (NumV 15)
+Just (NumV 12)
+"eval ( x in x*5)(lambda x in x+2)(3) = Just (NumV 25)"
+Just (NumV 6)
