@@ -171,6 +171,7 @@ evalM env (Leq l r) = do{(NumV l') <- evalM env l;
                      return (BoolV(l' <= r')) }
 evalM env (IsZero l) = do{(NumV l') <- evalM env l;
                      return (BoolV(l' == 0)) }
+evalM env (Composite f g a) = App (elabTerm f) (App (elabTerm g) (elabTerm a))
                      
 -- Part 4: Extra lang feature
 
@@ -192,6 +193,11 @@ elabTerm (FixX f) = Fix (elabTerm f)
 elabTerm (IdX i) = Id i
 elabTerm (BindX i v b) = App(Lambda i TUnit (elabTerm b))(elabTerm v)
 elabTerm (Composite f g a) = App (elabTerm f) (App (elabTerm g) (elabTerm a))
+elabTerm (FixX f) =(Fix (elabTerm f))
+
+-- Part 5: interpreter
+evalT ::  TEAM12 -> (Maybe VALUELANG)
+evalT x = if(typeofM [] (x) == Nothing) then Nothing else evalM [] (x)
 
 t = (Bind "f"
         (Lambda "g" ((:->:) TNum TNum)
@@ -217,6 +223,15 @@ main = do
     print $ evalM [] (App (Lambda "x" TNum (Plus (Id "x") (Num 5))) (Num 5))
     print $ evalM [] (App (Lambda "x" TNum (Plus (Id "x") (Num 10))) (Num 5))
     print $ evalM [] (Bind "blake" (Num 5) (Bind "Blake" (Num 7) (Plus (Id "blake") (Id "Blake"))))
+
+
+    print "--------------------*  evalT  *--------------------"
+    -- print $ evalM [] (Plus (Num 5) (Num 10))
+    print $ evalT (Lambda "x" TNum (Plus (Id "x") (Num 5)))
+    print $ evalT (App (Lambda "x" TNum (Plus (Id "x") (Num 5))) (Num 5))
+    print $ evalT (App (Lambda "x" TNum (Plus (Id "x") (Num 10))) (Num 5))
+    print $ evalT (Bind "blake" (Num 5) (Bind "Blake" (Num 7) (Plus (Id "blake") (Id "Blake"))))
+    print $ evalT (Bind "blake" (Num 5) (Bind "Blake" (Num 0) (Div (Id "blake") (Id "Blake"))))
     print ("eval ( x in x*5)(lambda x in x+2)(3) = " ++ show (evalTerm [] (Composite 
                                                               (LambdaX "x" TNum (MultX (IdX "x")(NumX 5)))
                                                               (LambdaX "x" TNum (PlusX (IdX "x")(NumX 2)))
